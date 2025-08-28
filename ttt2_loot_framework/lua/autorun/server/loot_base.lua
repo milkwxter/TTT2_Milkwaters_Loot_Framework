@@ -3,6 +3,9 @@ if not LOOT_BASE then
     LOOT_BASE.RegisteredItems = {}
 end
 
+-- my convars
+local cvar_LootFrameworkEnabled = CreateConVar("ttt2_lootframework_enabled", 1, {FCVAR_ARCHIVE, FCVAR_NOTIFY, FCVAR_REPLICATED}, "Enable the Loot Framework?", 0, 1)
+
 function LOOT_BASE:RegisterItem(uniqueID, data)
 	-- no dupes
     if self.RegisteredItems[uniqueID] then return end
@@ -57,6 +60,13 @@ function LOOT_BASE:SpawnAllLoot()
 	
 	-- begin spawning
     for _, item in ipairs(items) do
+		-- check the chance for this item to spawn
+		local spawnChance = math.random(0, 100)
+		if spawnChance > item.chance then
+			print(item.data.itemClassName .. " was skipped from spawning this round. Rolled a " .. spawnChance .. " which is MORE than set chance: " .. item.chance .. ".")
+			continue
+		end
+		
 		-- how many can we spawn?
 		local numToSpawn = math.random(0, item.maxItems)
 		
@@ -91,6 +101,9 @@ end
 if SERVER then
 	-- when round starts, spawn my stuff
 	hook.Add("TTTBeginRound", "BeginRound_SpawnAllLoot", function()
+		-- check to see if we are disabled
+		if cvar_LootFrameworkEnabled == 0 then return end
+		-- if not, spawn tha loot
 		LOOT_BASE:SpawnAllLoot()
 	end)
 end
